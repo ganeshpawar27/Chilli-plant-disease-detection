@@ -1,5 +1,5 @@
-export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
-export const UPLOAD_URL = import.meta.env.VITE_UPLOAD_URL || 'http://localhost:8080/uploads';
+export const API_URL = import.meta.env.VITE_API_URL || 'https://chilli-backend-dwbi.onrender.com';
+export const UPLOAD_URL = import.meta.env.VITE_UPLOAD_URL || 'https://chilli-backend-dwbi.onrender.com/uploads';
 
 export const DISEASE_CLASSES = [
   'Bacterial Spot',

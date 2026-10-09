@@ -1,8 +1,10 @@
 import axios from 'axios';
 import { API_URL } from '../utils/constants';
 
+const BASE_URL = 'https://chilli-backend-dwbi.onrender.com/api';
+
 const api = axios.create({
-  baseURL: `${API_URL}/api`,
+  baseURL: BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },

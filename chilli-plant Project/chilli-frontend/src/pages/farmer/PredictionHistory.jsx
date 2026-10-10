@@ -10,32 +10,17 @@ const PredictionHistory = () => {
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [filter, setFilter] = useState('all');
-  const [selected, setSelected] = useState(null); // prediction opened in the card
-
+  const [selectedPrediction, setSelectedPrediction] = useState(null);
+  
   useEffect(() => {
     fetchHistory();
   }, [page]);
-
-  // Close the card with the Escape key and lock page scroll while it is open
-  useEffect(() => {
-    if (!selected) return;
-    const onKeyDown = (e) => {
-      if (e.key === 'Escape') setSelected(null);
-    };
-    document.addEventListener('keydown', onKeyDown);
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.removeEventListener('keydown', onKeyDown);
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [selected]);
-
+  
   const fetchHistory = async () => {
     try {
       setLoading(true);
       const response = await farmerService.getHistory(page, 10);
-
+      
       if (Array.isArray(response)) {
         setPredictions(response);
         setTotalPages(1);
@@ -49,24 +34,24 @@ const PredictionHistory = () => {
       setLoading(false);
     }
   };
-
+  
   const filteredPredictions = filter === 'all'
     ? predictions
-    : predictions.filter(p =>
-        filter === 'healthy'
+    : predictions.filter(p => 
+        filter === 'healthy' 
           ? p.predictedDisease === 'Healthy Leaf'
           : p.predictedDisease !== 'Healthy Leaf'
       );
-
+  
   if (loading) {
     return <LoadingSpinner message="Loading prediction history..." />;
   }
-
+  
   return (
-    <div>
+    <div className="relative">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold">📊 Prediction History</h2>
-
+        
         <div className="flex space-x-2">
           <button
             onClick={() => setFilter('all')}
@@ -100,7 +85,7 @@ const PredictionHistory = () => {
           </button>
         </div>
       </div>
-
+      
       {filteredPredictions.length === 0 ? (
         <div className="card text-center py-12">
           <p className="text-5xl mb-4">🔍</p>
@@ -136,18 +121,13 @@ const PredictionHistory = () => {
                 {filteredPredictions.map((prediction) => (
                   <tr key={prediction.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <button
-                        type="button"
-                        onClick={() => setSelected(prediction)}
+                      <img
+                        src={getImageUrl(prediction.imagePath)}
+                        alt="Leaf"
+                        onClick={() => setSelectedPrediction(prediction)}
                         title="Click to view details"
-                        className="block rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                      >
-                        <img
-                          src={getImageUrl(prediction.imagePath)}
-                          alt="Leaf"
-                          className="w-12 h-12 object-cover rounded-lg cursor-pointer hover:opacity-80 hover:ring-2 hover:ring-green-500 transition"
-                        />
-                      </button>
+                        className="w-12 h-12 object-cover rounded-lg cursor-pointer hover:scale-110 hover:ring-2 hover:ring-green-500 transition-all shadow-sm"
+                      />
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="font-medium">{prediction.predictedDisease}</span>
@@ -171,7 +151,7 @@ const PredictionHistory = () => {
               </tbody>
             </table>
           </div>
-
+          
           {/* Pagination */}
           {totalPages > 1 && (
             <div className="px-6 py-4 flex items-center justify-between border-t">
@@ -197,144 +177,76 @@ const PredictionHistory = () => {
         </div>
       )}
 
-      {selected && (
-        <PredictionDetailModal
-          prediction={selected}
-          onClose={() => setSelected(null)}
-        />
-      )}
-    </div>
-  );
-};
-
-// Popup card with full details of one past prediction
-const PredictionDetailModal = ({ prediction, onClose }) => {
-  const p = prediction;
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-      onClick={onClose}
-      role="dialog"
-      aria-modal="true"
-    >
-      <div
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b sticky top-0 bg-white rounded-t-2xl">
-          <div>
-            <h3 className="text-xl font-bold">🔬 Prediction Details</h3>
-            <p className="text-sm text-gray-500">{formatDate(p.predictionTime)}</p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-            className="w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 text-xl leading-none"
+      {/* POPUP CARD MODAL */}
+      {selectedPrediction && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+          onClick={() => setSelectedPrediction(null)}
+        >
+          <div 
+            className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-gray-100 transform transition-all"
+            onClick={(e) => e.stopPropagation()}
           >
-            ×
-          </button>
-        </div>
+            {/* Modal Header */}
+            <div className="flex justify-between items-center px-6 py-4 border-b border-gray-100 bg-gray-50">
+              <h3 className="font-semibold text-gray-800 text-lg">🌱 Leaf Prediction Details</h3>
+              <button
+                className="text-gray-400 hover:text-gray-600 text-2xl font-bold leading-none"
+                onClick={() => setSelectedPrediction(null)}
+              >
+                &times;
+              </button>
+            </div>
 
-        <div className="p-6 space-y-6">
-          {/* Image + results */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
+            {/* Modal Image */}
+            <div className="bg-black/5 p-4 flex items-center justify-center">
               <img
-                src={getImageUrl(p.imagePath)}
-                alt="Uploaded leaf"
-                className="w-full h-48 object-cover rounded-lg"
+                src={getImageUrl(selectedPrediction.imagePath)}
+                alt="Chilli leaf preview"
+                className="max-h-72 w-full object-contain rounded-xl shadow-inner bg-white"
               />
             </div>
 
-            <div className="bg-gray-50 rounded-lg p-4 text-center">
-              <p className="text-sm font-semibold text-gray-500 mb-2">🦠 Disease</p>
-              <p className="text-2xl font-bold text-green-800 mb-2">
-                {p.predictedDisease || 'N/A'}
-              </p>
-              <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${getSeverityColor(p.severity)}`}>
-                {p.severity || 'N/A'} Severity
-              </span>
-              <div className="mt-4">
-                <div className="flex justify-between text-xs mb-1">
-                  <span>Confidence</span>
-                  <span>{p.confidence?.toFixed(2)}%</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    className="bg-green-600 h-2 rounded-full"
-                    style={{ width: `${p.confidence || 0}%` }}
-                  ></div>
-                </div>
+            {/* Modal Content Info */}
+            <div className="p-6 space-y-3">
+              <div className="flex justify-between items-center pb-2 border-b border-gray-100">
+                <span className="text-sm font-medium text-gray-500">Disease Detected</span>
+                <span className="font-bold text-gray-900 text-base">{selectedPrediction.predictedDisease}</span>
+              </div>
+              <div className="flex justify-between items-center pb-2 border-b border-gray-100">
+                <span className="text-sm font-medium text-gray-500">Confidence</span>
+                <span className="text-sm font-semibold text-green-600">
+                  {selectedPrediction.confidence?.toFixed(2)}%
+                </span>
+              </div>
+              <div className="flex justify-between items-center pb-2 border-b border-gray-100">
+                <span className="text-sm font-medium text-gray-500">Growth Stage</span>
+                <span className="text-sm font-medium text-gray-800">{selectedPrediction.growthStage}</span>
+              </div>
+              <div className="flex justify-between items-center pb-2 border-b border-gray-100">
+                <span className="text-sm font-medium text-gray-500">Severity</span>
+                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getSeverityColor(selectedPrediction.severity)}`}>
+                  {selectedPrediction.severity}
+                </span>
+              </div>
+              <div className="flex justify-between items-center pt-1">
+                <span className="text-sm font-medium text-gray-500">Date & Time</span>
+                <span className="text-xs text-gray-600">{formatDate(selectedPrediction.predictionTime)}</span>
               </div>
             </div>
 
-            <div className="bg-gray-50 rounded-lg p-4 text-center">
-              <p className="text-sm font-semibold text-gray-500 mb-2">🌱 Growth Stage</p>
-              <p className="text-2xl font-bold text-blue-800 mb-2">
-                {p.growthStage || 'N/A'}
-              </p>
-              <div className="mt-[3.25rem]">
-                <div className="flex justify-between text-xs mb-1">
-                  <span>Confidence</span>
-                  <span>{p.growthConfidence?.toFixed(2)}%</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    className="bg-blue-600 h-2 rounded-full"
-                    style={{ width: `${p.growthConfidence || 0}%` }}
-                  ></div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Treatment recommendations */}
-          <div>
-            <h4 className="text-lg font-bold mb-4">💊 Treatment Recommendations</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-4">
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h5 className="font-semibold text-gray-700 mb-2">📝 Description</h5>
-                  <p className="text-gray-600 text-sm">{p.description || 'N/A'}</p>
-                </div>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h5 className="font-semibold text-gray-700 mb-2">🔍 Cause</h5>
-                  <p className="text-gray-600 text-sm">{p.cause || 'N/A'}</p>
-                </div>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h5 className="font-semibold text-gray-700 mb-2">⚠️ Symptoms</h5>
-                  <p className="text-gray-600 text-sm">{p.symptoms || 'N/A'}</p>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div className="bg-red-50 border border-red-200 p-4 rounded-lg">
-                  <h5 className="font-semibold text-red-800 mb-2">🧪 Chemical Treatment</h5>
-                  <p className="text-red-700 text-sm">{p.pesticide || 'N/A'}</p>
-                </div>
-                <div className="bg-green-50 border border-green-200 p-4 rounded-lg">
-                  <h5 className="font-semibold text-green-800 mb-2">🌿 Organic Treatment</h5>
-                  <p className="text-green-700 text-sm">{p.organicTreatment || 'N/A'}</p>
-                </div>
-                <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
-                  <h5 className="font-semibold text-blue-800 mb-2">🛡️ Prevention Tips</h5>
-                  <p className="text-blue-700 text-sm">{p.prevention || 'N/A'}</p>
-                </div>
-              </div>
+            {/* Modal Footer */}
+            <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end">
+              <button
+                className="px-5 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-medium transition shadow-sm"
+                onClick={() => setSelectedPrediction(null)}
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>
-
-        {/* Footer */}
-        <div className="px-6 py-4 border-t flex justify-end">
-          <button type="button" onClick={onClose} className="btn-secondary">
-            Close
-          </button>
-        </div>
-      </div>
+      )}
     </div>
   );
 };

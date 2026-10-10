@@ -2,6 +2,7 @@ package com.uday.chillidisease.service.impl;
 
 import com.uday.chillidisease.dto.request.AdminLoginRequest;
 import com.uday.chillidisease.dto.response.ApiResponse;
+import org.springframework.transaction.annotation.Transactional;
 import com.uday.chillidisease.dto.response.DiseaseAnalyticsResponse;
 import com.uday.chillidisease.dto.response.FarmerListResponse;
 import com.uday.chillidisease.entity.Admin;
@@ -86,15 +87,20 @@ public class AdminServiceImpl implements AdminService {
         });
     }
 
-    @Override
-    public ApiResponse deleteFarmer(Long farmerId) {
-        if (!farmerRepository.existsById(farmerId)) {
-            return new ApiResponse(false, "Farmer not found");
-        }
-
-        farmerRepository.deleteById(farmerId);
-        return new ApiResponse(true, "Farmer deleted successfully");
+   @Override
+@Transactional
+public ApiResponse deleteFarmer(Long farmerId) {
+    if (!farmerRepository.existsById(farmerId)) {
+        return new ApiResponse(false, "Farmer not found");
     }
+
+    // Pehle is farmer ki saari predictions delete karo (foreign key ki wajah se)
+    predictionRepository.deleteAll(
+            predictionRepository.findByFarmerIdOrderByPredictionTimeDesc(farmerId));
+
+    farmerRepository.deleteById(farmerId);
+    return new ApiResponse(true, "Farmer deleted successfully");
+}
 
     @Override
     public DiseaseAnalyticsResponse getDashboardAnalytics() {

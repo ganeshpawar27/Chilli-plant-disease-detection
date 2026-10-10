@@ -1,4 +1,5 @@
 import { format } from 'date-fns';
+import { UPLOAD_URL } from './constants';
 
 export const formatDate = (dateString) => {
   if (!dateString) return 'N/A';
@@ -27,5 +28,5 @@ export const getSeverityColor = (severity) => {
 export const getImageUrl = (imagePath) => {
   if (!imagePath) return '/placeholder-image.png';
   if (imagePath.startsWith('http')) return imagePath;
-  return `/uploads/${imagePath}`;
+  return `${UPLOAD_URL}/${imagePath}`;
 };

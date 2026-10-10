@@ -167,7 +167,7 @@ def preprocess_image(image_bytes):
             print(f"Converted image from {original_mode} to RGB")
         
         # Resize to match training size
-        img = img.resize(IMG_SIZE, Image.Resampling.LANCZOS)
+        img = img.resize(IMG_SIZE, Image.Resampling.NEAREST)
         
         # Convert to numpy array and normalize exactly as training
         img_array = np.array(img, dtype=np.float32) / 255.0
